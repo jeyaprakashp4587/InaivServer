@@ -11,7 +11,10 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  email: {
+  FCMtoken: {
+    type: String,
+  },
+  number: {
     type: String,
     required: true,
     unique: true,

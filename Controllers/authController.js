@@ -5,31 +5,20 @@ import { createAccessToken, createRefreshToken } from "../Middlewares/JWT.js";
 
 export const registerUser = async (req, res) => {
   try {
-    const { name, email, password, referralCode, country, language } = req.body;
-    // return;
-    const existingUser = await User.exists({
-      email: email.toLowerCase().trim(),
-    });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const { uid } = req.user;
+    const { name, imgUrl, number, college } = req.body;
     const newUser = await User.create({
+      uid,
       name,
-      email: email.toLowerCase().trim(),
-      password: hashedPassword,
+      number,
+      college,
+      imgUrl,
     });
     const accessToken = await createAccessToken(newUser._id);
     const refreshToken = await createRefreshToken(newUser._id);
     res.status(201).json({
       message: "Register succesfully",
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        email: newUser.email,
-      },
+      userId: newUser._id,
       tokens: { accessToken, refreshToken },
     });
   } catch (err) {
@@ -39,39 +28,18 @@ export const registerUser = async (req, res) => {
 };
 // login
 export const login = async (req, res) => {
-  const { email: Email, password: Password } = req.body;
+  const { uid } = req.user;
   try {
-    // return;
-    if (!Email || !Password) {
-      return res
-        .status(400)
-        .json({ error: "Email and Password are required." });
+    const userData = await User.findOne({ uid });
+    if (!userData) {
+      return res.status(404).json({ error: "User not found" });
     }
-
-    const lowerCaseEmail = Email.toLowerCase().trim();
-
-    const findEmailUser = await User.findOne({ email: lowerCaseEmail });
-
-    if (!findEmailUser) {
-      return res.status(400).json({ error: "Email or Password is incorrect." });
-    }
-
-    const isPasswordCorrect = await bcrypt.compare(
-      Password,
-      findEmailUser.password,
-    );
-
-    if (!isPasswordCorrect) {
-      return res.status(401).json({ error: "Email or Password is incorrect." });
-    }
-    const userData = findEmailUser.toObject();
-    delete userData.password;
     const accessToken = await createAccessToken(userData._id);
     const refreshToken = await createRefreshToken(userData._id);
 
-    res.json({
+    res.status(200).json({
       message: "login successful",
-      user: userData,
+      userId: userData._id,
       tokens: { accessToken, refreshToken },
     });
   } catch (error) {
@@ -81,7 +49,6 @@ export const login = async (req, res) => {
 };
 
 // refresh token
-
 export const refresh = async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -110,7 +77,7 @@ export const refresh = async (req, res) => {
 export const getUser = async (req, res) => {
   const { userId } = req.params;
   try {
-    const userData = await User.findById(userId, { password: 0 });
+    const userData = await User.findById(userId);
     if (userData) {
       const accessToken = await createAccessToken(userData._id);
       const refreshToken = await createRefreshToken(userData._id);

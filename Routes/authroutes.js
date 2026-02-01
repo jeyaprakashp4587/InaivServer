@@ -7,9 +7,10 @@ import {
   registerUser,
 } from "../Controllers/authController.js";
 import { verifyToken } from "../Middlewares/JWT.js";
+import { verifyFirebaseToken } from "../Middlewares/verifyGoogleAuth.js";
 
-router.post("/register", registerUser);
-router.post("/login", login);
+router.post("/register", verifyFirebaseToken, registerUser);
+router.post("/login", verifyFirebaseToken, login);
 router.post("/refresh", refresh);
 router.get("/getUser/:userId", verifyToken, getUser);
 
