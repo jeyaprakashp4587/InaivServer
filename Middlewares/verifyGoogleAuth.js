@@ -1,4 +1,4 @@
-import initializeFirebaseAdmin from "../Firebase/firebaseAdmin";
+import initializeFirebaseAdmin from "../Firebase/firebaseAdmin.js";
 const admin = initializeFirebaseAdmin();
 export const verifyFirebaseToken = async (req, res, next) => {
   const header = req.headers.authorization;
@@ -13,7 +13,6 @@ export const verifyFirebaseToken = async (req, res, next) => {
       uid: decoded.uid,
       provider: decoded.firebase?.sign_in_provider,
     };
-
     next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
