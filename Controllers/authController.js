@@ -5,7 +5,11 @@ import { createAccessToken, createRefreshToken } from "../Middlewares/JWT.js";
 export const registerUser = async (req, res) => {
   try {
     const { uid } = req.user;
-    const { name, imgUrl, number, college } = req.body.data;
+    const { name, imgUrl, number, collegeName, department, year } =
+      req.body.data;
+    console.log(uid, name, imgUrl, collegeName, department, year);
+    return;
+
     const newUser = await User.create({
       uid,
       name,
