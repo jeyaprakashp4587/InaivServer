@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../Models/User.js";
 import { createAccessToken, createRefreshToken } from "../Middlewares/JWT.js";
@@ -6,7 +5,7 @@ import { createAccessToken, createRefreshToken } from "../Middlewares/JWT.js";
 export const registerUser = async (req, res) => {
   try {
     const { uid } = req.user;
-    const { name, imgUrl, number, college } = req.body;
+    const { name, imgUrl, number, college } = req.body.data;
     const newUser = await User.create({
       uid,
       name,
@@ -30,6 +29,8 @@ export const registerUser = async (req, res) => {
 export const login = async (req, res) => {
   const { uid } = req.user;
   try {
+    console.log(uid);
+
     const userData = await User.findOne({ uid });
     if (!userData) {
       return res.status(404).json({ error: "User not found" });

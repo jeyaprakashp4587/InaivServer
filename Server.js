@@ -16,7 +16,7 @@ dotenv.config();
 import bodyParser from "body-parser";
 const app = express();
 
-app.use(cors({ origin: "*" }));
+app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"] }));
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const server = http.createServer(app);

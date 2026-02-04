@@ -2,7 +2,6 @@ import initializeFirebaseAdmin from "../Firebase/firebaseAdmin.js";
 const admin = initializeFirebaseAdmin();
 export const verifyFirebaseToken = async (req, res, next) => {
   const header = req.headers.authorization;
-
   if (!header || !header.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing token" });
   }
