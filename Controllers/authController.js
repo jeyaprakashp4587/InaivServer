@@ -4,18 +4,17 @@ import { createAccessToken, createRefreshToken } from "../Middlewares/JWT.js";
 
 export const registerUser = async (req, res) => {
   try {
-    const { uid } = req.user;
-    const { name, imgUrl, number, collegeName, department, year } =
-      req.body.data;
-    console.log(uid, name, imgUrl, collegeName, department, year);
-    return;
-
+    const { uid, imgUrl } = req.user;
+    const { name, collegeName, department, year } = req.body.data;
     const newUser = await User.create({
       uid,
       name,
-      number,
-      college,
-      imgUrl,
+      college: {
+        collegeName: collegeName,
+        department: department,
+        year: year,
+      },
+      imgUrl: imgUrl,
     });
     const accessToken = await createAccessToken(newUser._id);
     const refreshToken = await createRefreshToken(newUser._id);
@@ -33,8 +32,6 @@ export const registerUser = async (req, res) => {
 export const login = async (req, res) => {
   const { uid } = req.user;
   try {
-    console.log(uid);
-
     const userData = await User.findOne({ uid });
     if (!userData) {
       return res.status(404).json({ error: "User not found" });
