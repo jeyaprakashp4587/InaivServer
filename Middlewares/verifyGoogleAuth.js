@@ -8,6 +8,7 @@ export const verifyFirebaseToken = async (req, res, next) => {
   const token = header.split(" ")[1];
   try {
     const decoded = await admin.auth().verifyIdToken(token);
+    // console.log(decoded);
 
     req.user = {
       uid: decoded.uid,

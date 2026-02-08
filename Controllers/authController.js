@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../Models/User.js";
 import { createAccessToken, createRefreshToken } from "../Middlewares/JWT.js";
+import DB1 from "../DB/DB1.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -32,7 +33,12 @@ export const registerUser = async (req, res) => {
 export const login = async (req, res) => {
   const { uid } = req.user;
   try {
-    const userData = await User.findOne({ uid });
+    const collection = await DB1.collection("users").find({});
+    const userData = await User.findOne({ uid: uid });
+    console.log(collection);
+
+    console.log(userData);
+
     if (!userData) {
       return res.status(404).json({ error: "User not found" });
     }
