@@ -67,3 +67,21 @@ export const remove = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+// get Suggestions groups
+export const getSuggestionsGroups = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const groups = await Group.find({ members: { $ne: userId } })
+      .populate("members", "name email")
+      .slice(0, 5)
+      .limit(5);
+    if (groups) {
+      return res.status(200).json(groups);
+    } else {
+      return res.status(404).json({ message: "No groups found" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
