@@ -10,4 +10,4 @@ const sellNoteSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-export default DB1.model("SellNote", sellNoteSchema);
+export default DB1.model("SellNote", sellNoteSchema, "sellnotes");

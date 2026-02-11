@@ -14,4 +14,4 @@ const chatSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-export default DB1.model("Chat", chatSchema);
+export default DB1.model("Chat", chatSchema, "chats");

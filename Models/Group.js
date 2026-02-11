@@ -6,10 +6,11 @@ const groupSchema = new mongoose.Schema({
   description: String,
   imageUrl: String,
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  admins: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
   isVerified: { type: Boolean, default: false },
+  District: String,
 });
 
-export default DB1.model("Group", groupSchema);
+export default DB1.model("Group", groupSchema, "groups");

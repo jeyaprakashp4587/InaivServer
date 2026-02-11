@@ -18,6 +18,8 @@
   },
   "scripts": {
     "dev": "nodemon Server.js",
-    "start": "node Server.js"
+    "start": "node Server.js",
+    "seed:users": "node seeders/seedUsers.js",
+    "seed:all": "node seeders/seedAll.js"
   }
 }

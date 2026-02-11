@@ -17,9 +17,9 @@ export const getAll = async (req, res) => {
 export const getById = async (req, res) => {
   try {
     const { id } = req.params;
-    const group = await Group.findById(id)
-      .populate("members", "name email")
-      .populate("admin", "name email");
+    // console.log(id);
+
+    const group = await Group.findById(id);
     if (!group) return res.status(404).json({ message: "Group not found" });
     res.status(200).json(group);
   } catch (err) {
@@ -71,11 +71,43 @@ export const remove = async (req, res) => {
 export const getSuggestionsGroups = async (req, res) => {
   try {
     const userId = req.user.id;
-    const groups = await Group.find({ members: { $ne: userId } })
-      .populate("members", "name email")
-      .slice(0, 5)
-      .limit(5);
-    if (groups) {
+    // console.log("userID", userId);
+
+    const groups = await Group.aggregate([
+      { $match: { members: { $ne: userId } } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "members",
+          foreignField: "_id",
+          as: "MembersInfo",
+        },
+      },
+      {
+        $addFields: {
+          members: { $slice: ["$MembersInfo", 5] },
+          membersCount: { $size: "$members" },
+        },
+      },
+      {
+        $project: {
+          group: {
+            name: "$name",
+            description: "$description",
+            imageUrl: "$imageUrl",
+            District: "$District",
+            isVerified: "$isVerified",
+          },
+          membersCount: 1,
+          members: {
+            name: 1,
+            imgUrl: 1,
+          },
+        },
+      },
+    ]);
+    if (groups && groups.length > 0) {
       return res.status(200).json(groups);
     } else {
       return res.status(404).json({ message: "No groups found" });

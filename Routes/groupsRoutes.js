@@ -5,15 +5,17 @@ import {
   create,
   update,
   remove,
+  getSuggestionsGroups,
 } from "../Controllers/groupsController.js";
 import { verifyToken } from "../Middlewares/JWT.js";
 
 const router = express.Router();
 
-router.get("/", verifyToken, getAll);
-router.get("/:id", verifyToken, getById);
-router.post("/", verifyToken, create);
-router.put("/:id", verifyToken, update);
-router.delete("/:id", verifyToken, remove);
+router.get("/getAllGroups", verifyToken, getAll);
+router.get("/getParticularGroup/:id", verifyToken, getById);
+router.post("/createGroup", verifyToken, create);
+router.put("/updateGroup:id", verifyToken, update);
+router.delete("/deleteGroup/:id", verifyToken, remove);
+router.get("/getSuggestionGroups", verifyToken, getSuggestionsGroups);
 
 export default router;

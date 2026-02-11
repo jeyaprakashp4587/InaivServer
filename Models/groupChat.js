@@ -14,4 +14,4 @@ const groupChatSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-export default DB1.model("groupChat", groupChatSchema);
+export default DB1.model("groupChat", groupChatSchema, "groupchats");

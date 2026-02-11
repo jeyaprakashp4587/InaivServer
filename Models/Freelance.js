@@ -16,4 +16,4 @@ const freelanceSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
 });
 
-export default DB1.model("Freelance", freelanceSchema);
+export default DB1.model("Freelance", freelanceSchema, "freelances");
