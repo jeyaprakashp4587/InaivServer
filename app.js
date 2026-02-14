@@ -5,7 +5,7 @@ import userRoutes from "./Routes/userRoutes.js";
 import privateChatsRoutes from "./Routes/privateChatsRoutes.js";
 // import connectionRoutes from "./Routes/connectionroutes.js";
 import sellNotesRoutes from "./Routes/sellNotesRoutes.js";
-import groupChatRoutes from "./Routes/gropuChatRoutes.js";
+import groupChatRoutes from "./Routes/groupChatRoutes.js";
 import freelanceRoutes from "./Routes/freelanceRoutes.js";
 import bodyParser from "body-parser";
 import cors from "cors";

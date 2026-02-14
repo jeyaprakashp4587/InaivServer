@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Group from "../Models/Group.js";
 
 // Get all groups
@@ -17,11 +18,64 @@ export const getAll = async (req, res) => {
 export const getById = async (req, res) => {
   try {
     const { id } = req.params;
-    // console.log(id);
 
-    const group = await Group.findById(id);
-    if (!group) return res.status(404).json({ message: "Group not found" });
-    res.status(200).json(group);
+    const groupId = new mongoose.Types.ObjectId(id);
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const group = await Group.aggregate([
+      { $match: { _id: groupId } },
+      {
+        $addFields: {
+          isMember: { $in: [userId, "$members"] },
+          isAdmin: { $in: [userId, "$admins"] },
+          isPendingApproval: { $in: [userId, "$pendingJoinRequests"] },
+        },
+      },
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "members",
+          foreignField: "_id",
+          as: "membersInfo",
+        },
+      },
+
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          imageUrl: 1,
+          District: 1,
+          isVerified: 1,
+          isMember: 1,
+          isAdmin: 1,
+          isPendingApproval: 1,
+          members: {
+            $cond: {
+              if: "$isMember",
+              then: {
+                $map: {
+                  input: "$membersInfo",
+                  as: "member",
+                  in: {
+                    _id: "$$member._id",
+                    name: "$$member.name",
+                    imgUrl: "$$member.imgUrl",
+                  },
+                },
+              },
+              else: [],
+            },
+          },
+        },
+      },
+    ]);
+
+    if (!group.length) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    res.status(200).json(group[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -31,10 +85,36 @@ export const getById = async (req, res) => {
 // Create group
 export const create = async (req, res) => {
   try {
-    const group = await Group.create(req.body);
+    const { userId } = req.user;
+    const { name, description, imageUrl, District } = req.body;
+    const group = await new Group({
+      name: name,
+      description: description,
+      imageUrl: imageUrl,
+      District: District,
+      admins: [userId],
+    });
+    await group.save();
     res.status(201).json(group);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+// join group
+export const joinGroup = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const { groupId } = req.body;
+    const group = await Group.findByIdAndUpdate(
+      groupId,
+      { $push: { members: userId } },
+      { new: true },
+    );
+    if (!group) return res.status(404).json({ message: "Group not found" });
+    res.status(200).json(group);
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Server error" });
   }
 };

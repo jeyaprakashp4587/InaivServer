@@ -11,6 +11,9 @@ const groupSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now },
   isVerified: { type: Boolean, default: false },
   District: String,
+  isStrictAllow: { type: Boolean, default: false },
+  pendingJoinRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  isPrivate: { type: Boolean, default: false },
 });
 
 export default DB1.model("Group", groupSchema, "groups");
