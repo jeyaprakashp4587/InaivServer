@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Group from "../Models/Group.js";
+import User from "../Models/User.js";
 
 // Get all groups
 export const getAll = async (req, res) => {
@@ -21,6 +22,7 @@ export const getById = async (req, res) => {
 
     const groupId = new mongoose.Types.ObjectId(id);
     const userId = new mongoose.Types.ObjectId(req.user.id);
+    const user = await User.findById(userId);
     const group = await Group.aggregate([
       { $match: { _id: groupId } },
       {
@@ -30,13 +32,20 @@ export const getById = async (req, res) => {
           isPendingApproval: { $in: [userId, "$pendingJoinRequests"] },
         },
       },
-
       {
         $lookup: {
           from: "users",
           localField: "members",
           foreignField: "_id",
           as: "membersInfo",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "admins",
+          foreignField: "_id",
+          as: "adminsInfo",
         },
       },
 
@@ -50,6 +59,18 @@ export const getById = async (req, res) => {
           isMember: 1,
           isAdmin: 1,
           isPendingApproval: 1,
+          admins: {
+            $map: {
+              input: "$adminsInfo",
+              as: "admin",
+              in: {
+                _id: "$$admin._id",
+                name: "$$admin.name",
+                imgUrl: "$$admin.imgUrl",
+                isConnection: { $in: ["$$admin._id", user.Connections] },
+              },
+            },
+          },
           members: {
             $cond: {
               if: "$isMember",
