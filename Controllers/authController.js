@@ -33,11 +33,7 @@ export const registerUser = async (req, res) => {
 export const login = async (req, res) => {
   const { uid } = req.user;
   try {
-    const collection = await DB1.collection("users").find({});
     const userData = await User.findOne({ uid: uid });
-    console.log(collection);
-
-    console.log(userData);
 
     if (!userData) {
       return res.status(404).json({ error: "User not found" });

@@ -32,7 +32,7 @@ export const verifyToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
-    const user = await User.findById(decoded.userId).select("name language");
+    const user = await User.findById(decoded.userId).select("name _id");
     if (!user) return res.status(404).json({ msg: "User not found" });
     req.userId = decoded.userId;
     req.user = user;
