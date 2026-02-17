@@ -96,7 +96,7 @@ export const getById = async (req, res) => {
       return res.status(404).json({ message: "Group not found" });
     }
 
-    res.status(200).json(group[0]);
+    res.status(200).json({ group: group[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

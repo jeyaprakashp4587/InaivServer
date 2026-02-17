@@ -1,7 +1,7 @@
 import { get } from "mongoose";
 import DB1 from "../DB/DB1.js";
 import { aiQuestions } from "../Utils/GPT AI/Questions.js";
-
+// update
 export const getAllPreparations = async (req, res) => {
   try {
     const examsCollections = await DB1.collection("preparations")
@@ -15,6 +15,8 @@ export const getAllPreparations = async (req, res) => {
 export const getPreparationData = async (req, res) => {
   try {
     const data = req.body;
+    console.log("data", data);
+
     // return;
     const response = await aiQuestions(data);
     console.log(response);

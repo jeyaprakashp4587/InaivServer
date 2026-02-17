@@ -6,6 +6,6 @@ import {
 
 const router = express.Router();
 router.get("/getAllPreparations", getAllPreparations);
-router.post("/getPreparationData", getPreparationData);
+router.post("/getParticularPreparation", getPreparationData);
 
 export default router;

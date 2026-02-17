@@ -81,7 +81,9 @@ export const refresh = async (req, res) => {
 export const getUser = async (req, res) => {
   const { userId } = req.params;
   try {
-    const userData = await User.findById(userId);
+    const userData = await User.findById(userId).select(
+      "imgUrl name college _id",
+    );
     if (userData) {
       const accessToken = await createAccessToken(userData._id);
       const refreshToken = await createRefreshToken(userData._id);
