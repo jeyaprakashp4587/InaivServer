@@ -3,10 +3,10 @@ import authRoutes from "./Routes/authroutes.js";
 import groupsRoutes from "./Routes/groupsRoutes.js";
 import userRoutes from "./Routes/userRoutes.js";
 import privateChatsRoutes from "./Routes/privateChatsRoutes.js";
-// import connectionRoutes from "./Routes/connectionroutes.js";
 import sellNotesRoutes from "./Routes/sellNotesRoutes.js";
 import groupChatRoutes from "./Routes/groupChatRoutes.js";
 import freelanceRoutes from "./Routes/freelanceRoutes.js";
+import preparationRoutes from "./Routes/preparationsroutes.js";
 import bodyParser from "body-parser";
 import cors from "cors";
 const app = express();
@@ -30,5 +30,6 @@ app.use("/privateChats", privateChatsRoutes);
 app.use("/sellNotes", sellNotesRoutes);
 app.use("/groupChat", groupChatRoutes);
 app.use("/freelance", freelanceRoutes);
+app.use("/preparation", preparationRoutes);
 
 export default app;
