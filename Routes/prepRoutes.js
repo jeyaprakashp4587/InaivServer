@@ -3,7 +3,7 @@ const router = express.Router();
 import {
   getAllPreparations,
   getPreparationData,
-} from "../Controllers/preparationsController";
+} from "../Controllers/prepController.js";
 
 router.get("/getAllPreparations", getAllPreparations);
 router.post("/getParticularPreparation", getPreparationData);
