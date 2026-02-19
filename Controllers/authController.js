@@ -32,6 +32,8 @@ export const registerUser = async (req, res) => {
 // login
 export const login = async (req, res) => {
   const { uid } = req.user;
+  // console.log(uid);
+
   try {
     const userData = await User.findOne({ uid: uid });
 
