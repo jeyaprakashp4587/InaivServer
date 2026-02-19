@@ -1,10 +1,10 @@
 import express from "express";
+const router = express.Router();
 import {
   getAllPreparations,
   getPreparationData,
-} from "../Controllers/preparationController.js";
+} from "../Controllers/preparationsController";
 
-const router = express.Router();
 router.get("/getAllPreparations", getAllPreparations);
 router.post("/getParticularPreparation", getPreparationData);
 
