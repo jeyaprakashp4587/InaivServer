@@ -1,5 +1,6 @@
 import initializeFirebaseAdmin from "../Firebase/firebaseAdmin.js";
 const admin = initializeFirebaseAdmin();
+
 export const verifyFirebaseToken = async (req, res, next) => {
   const header = req.headers.authorization;
   if (!header || !header.startsWith("Bearer ")) {
@@ -8,7 +9,6 @@ export const verifyFirebaseToken = async (req, res, next) => {
   const token = header.split(" ")[1];
   try {
     const decoded = await admin.auth().verifyIdToken(token);
-
     req.user = {
       uid: decoded.uid,
       provider: decoded.firebase?.sign_in_provider,
