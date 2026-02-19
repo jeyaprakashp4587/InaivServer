@@ -1,5 +1,5 @@
 import DB1 from "../DB/DB1.js";
-import { aiQuestions } from "../utils/GPT AI/Questions.js";
+import { aiQuestions } from "../Utils/GPTAI/Questions.js";
 
 export const getAllPreparations = async (req, res) => {
   try {
