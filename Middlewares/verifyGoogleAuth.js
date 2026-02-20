@@ -6,7 +6,10 @@ export const verifyFirebaseToken = async (req, res, next) => {
   if (!header || !header.startsWith("Bearer ")) {
     return res.status(401).json({ error: "Missing token" });
   }
-  const token = header.split(" ")[1];
+  const token = header.slice(7).trim();
+  if (!token) {
+    return res.status(401).json({ error: "Missing token" });
+  }
   try {
     console.log("auth token", token);
 
@@ -19,6 +22,7 @@ export const verifyFirebaseToken = async (req, res, next) => {
     };
     next();
   } catch (err) {
+    console.error("Firebase token verification failed:", err?.message || err);
     return res.status(401).json({ error: "Invalid token" });
   }
 };
