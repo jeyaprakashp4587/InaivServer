@@ -6,7 +6,7 @@ import DB1 from "../DB/DB1.js";
 export const registerUser = async (req, res) => {
   try {
     const { uid, imgUrl } = req.user;
-    const { name, collegeName, department, year } = req.body.data;
+    const { name, collegeName, department, year } = req.body;
     const newUser = await User.create({
       uid,
       name,
@@ -24,6 +24,7 @@ export const registerUser = async (req, res) => {
       userId: newUser._id,
       tokens: { accessToken, refreshToken },
     });
+    console.log("register sucesfull");
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });

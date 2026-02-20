@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   uid: {
     type: String,
     required: true,
-    unique: true,
+    // unique: true,
   },
   FCMtoken: {
     type: String,
