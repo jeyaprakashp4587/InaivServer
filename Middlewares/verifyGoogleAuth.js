@@ -8,6 +8,8 @@ export const verifyFirebaseToken = async (req, res, next) => {
   }
   const token = header.split(" ")[1];
   try {
+    console.log("auth token", token);
+
     const decoded = await admin.auth().verifyIdToken(token);
     req.user = {
       uid: decoded.uid,
@@ -15,8 +17,6 @@ export const verifyFirebaseToken = async (req, res, next) => {
       imgUrl: decoded.picture,
       email: decoded.email,
     };
-    console.log("sucess");
-
     next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
