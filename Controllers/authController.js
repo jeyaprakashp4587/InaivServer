@@ -33,7 +33,7 @@ export const registerUser = async (req, res) => {
 // login
 export const login = async (req, res) => {
   const { uid } = req.user;
-  // console.log(uid);
+  console.log(uid);
 
   try {
     const userData = await User.findOne({ uid: uid });
@@ -43,6 +43,7 @@ export const login = async (req, res) => {
     }
     const accessToken = await createAccessToken(userData._id);
     const refreshToken = await createRefreshToken(userData._id);
+    console.log(userData);
 
     res.status(200).json({
       message: "login successful",

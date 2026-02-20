@@ -15,6 +15,8 @@ export const verifyFirebaseToken = async (req, res, next) => {
       imgUrl: decoded.picture,
       email: decoded.email,
     };
+    console.log("sucess");
+
     next();
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });

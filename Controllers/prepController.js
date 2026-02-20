@@ -11,11 +11,11 @@ export const getAllPreparations = async (req, res) => {
     throw new Error("internal server error");
   }
 };
+//
 export const getPreparationData = async (req, res) => {
   try {
     const data = req.body;
     console.log("data", data);
-
     // return;
     const response = await aiQuestions(data);
     console.log(response);
