@@ -11,8 +11,6 @@ export const verifyFirebaseToken = async (req, res, next) => {
     return res.status(401).json({ error: "Missing token" });
   }
   try {
-    console.log("auth token", token);
-
     const decoded = await admin.auth().verifyIdToken(token);
     req.user = {
       uid: decoded.uid,
