@@ -46,7 +46,7 @@ const GROUPS_DATA = [
   },
 ];
 
-/* ---------------- HELPERS ---------------- */
+/* ---------------- MOCK DATA ---------------- */
 const NAMES = [
   "Sathish Kumar",
   "Arun Prakash",
@@ -72,15 +72,17 @@ const PROFILE_IMAGES = [
 
 const random = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+/* ---------------- SEED FUNCTION ---------------- */
 const seed = async () => {
   try {
     console.log("🔥 FULL RESET SEED STARTED");
 
-    await User.deleteMany();
-    await Group.deleteMany();
+    /* ----- WIPE OLD DATA ----- */
+    await Promise.all([User.deleteMany(), Group.deleteMany()]);
+
     console.log("🧹 Old users & groups wiped");
 
-    /* -------- CREATE GROUPS -------- */
+    /* ----- CREATE GROUPS ----- */
     const createdGroups = await Group.insertMany(
       GROUPS_DATA.map((g) => ({
         ...g,
@@ -90,73 +92,73 @@ const seed = async () => {
       })),
     );
 
-    const groupMap = {};
-    createdGroups.forEach((g) => (groupMap[g.name] = g));
+    console.log("✅ Groups created");
 
-    /* -------- CREATE USERS -------- */
+    /* ----- CREATE USERS (WITH GROUP ASSIGNED) ----- */
     const users = [];
 
     for (let i = 0; i < 100; i++) {
       const group = random(createdGroups);
-      const image = random(PROFILE_IMAGES);
 
       users.push({
         name: random(NAMES),
         uid: `UID_${i + 1}`,
-        number: `9${(100000000 + i).toString()}`,
-        imgUrl: image, // ✅ SET IMAGE
+        imgUrl: random(PROFILE_IMAGES),
         college: {
           collegeName: group.name,
           department: random(DEPARTMENTS),
           year: String((i % 4) + 1),
         },
-        groups: [],
+        groups: [{ groupId: group._id }],
         Connections: [],
       });
     }
 
     const createdUsers = await User.insertMany(users);
+
     console.log("✅ 100 users created");
 
-    /* -------- ASSIGN MEMBERS + ADMINS -------- */
-    createdUsers.forEach((user) => {
-      const group = groupMap[user.college.collegeName];
-      if (!group) return;
+    /* ----- BULK UPDATE GROUP MEMBERS + ADMINS ----- */
+    const bulkGroupUpdates = createdGroups.map((group) => {
+      const members = createdUsers
+        .filter((u) => u.college.collegeName === group.name)
+        .map((u) => u._id);
 
-      group.members.push(user._id);
-      user.groups.push({ groupId: group._id });
+      return {
+        updateOne: {
+          filter: { _id: group._id },
+          update: {
+            members,
+            admins: members.slice(0, 2),
+          },
+        },
+      };
     });
 
-    // ✅ MULTIPLE ADMINS (first 2 per group)
-    createdGroups.forEach((group) => {
-      group.admins = group.members.slice(0, 2);
-    });
+    await Group.bulkWrite(bulkGroupUpdates);
 
-    /* -------- FORCE imgUrl persistence -------- */
-    createdUsers.forEach((u, i) => {
-      u.imgUrl = u.imgUrl || random(PROFILE_IMAGES);
-    });
+    console.log("✅ Members & admins assigned");
 
-    await Promise.all([
-      ...createdGroups.map((g) => g.save()),
-      ...createdUsers.map((u) => u.save()),
-    ]);
-
-    console.log("✅ Members, admins & images fixed");
-
-    /* -------- CONNECTIONS -------- */
-    createdUsers.forEach((user) => {
+    /* ----- CREATE CONNECTIONS (SOCIAL GRAPH) ----- */
+    const bulkUserUpdates = createdUsers.map((user) => {
       const others = createdUsers
         .filter((u) => u._id.toString() !== user._id.toString())
         .sort(() => 0.5 - Math.random())
-        .slice(0, 4);
+        .slice(0, 4)
+        .map((u) => ({ connectionId: u._id }));
 
-      others.forEach((o) => user.Connections.push({ connectionId: o._id }));
+      return {
+        updateOne: {
+          filter: { _id: user._id },
+          update: { Connections: others },
+        },
+      };
     });
 
-    await Promise.all(createdUsers.map((u) => u.save()));
+    await User.bulkWrite(bulkUserUpdates);
 
-    console.log("🎉 FULL SEED COMPLETED");
+    console.log("🎉 FULL SEED COMPLETED SUCCESSFULLY");
+
     process.exit(0);
   } catch (err) {
     console.error("❌ SEED FAILED", err);
@@ -164,4 +166,5 @@ const seed = async () => {
   }
 };
 
+/* ---------------- RUN ---------------- */
 seed();

@@ -41,7 +41,6 @@ const generateUsers = (count = 100) => {
       name: getRandom(names),
       uid: `TVL_UID_${i + 1}`,
       FCMtoken: "",
-      number: `9${Math.floor(100000000 + Math.random() * 900000000)}`,
       college: {
         collegeName: getRandom(colleges),
         department: getRandom(departments),

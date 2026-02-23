@@ -2,6 +2,7 @@ import express from "express";
 const router = express.Router();
 import {
   getUser,
+  guestLogin,
   login,
   refresh,
   registerUser,
@@ -13,5 +14,6 @@ router.post("/register", verifyFirebaseToken, registerUser);
 router.post("/login", verifyFirebaseToken, login);
 router.post("/refresh", refresh);
 router.get("/getUser/:userId", verifyToken, getUser);
+router.post("/guestLogin", guestLogin);
 
 export default router;

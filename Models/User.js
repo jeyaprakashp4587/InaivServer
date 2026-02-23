@@ -14,10 +14,16 @@ const userSchema = new mongoose.Schema({
   FCMtoken: {
     type: String,
   },
-  number: {
-    type: String,
-    unique: true,
+  isVerfied: {
+    type: Boolean,
+    default: false,
   },
+  role: {
+    type: String,
+    enum: ["user", "guest"],
+    default: "guest",
+  },
+
   college: {
     collegeName: {
       type: String,

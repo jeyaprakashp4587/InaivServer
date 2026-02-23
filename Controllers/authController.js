@@ -5,7 +5,7 @@ import DB1 from "../DB/DB1.js";
 
 export const registerUser = async (req, res) => {
   try {
-    const { uid, imgUrl, number } = req.user;
+    const { uid, imgUrl } = req.user;
     const { name, collegeName, department, year } = req.body;
     const newUser = await User.create({
       uid,
@@ -16,16 +16,17 @@ export const registerUser = async (req, res) => {
         year: year,
       },
       imgUrl: imgUrl,
-      number: number,
+
+      role: "user",
     });
     const accessToken = await createAccessToken(newUser._id);
     const refreshToken = await createRefreshToken(newUser._id);
     res.status(201).json({
-      message: "Register succesfully",
+      message: "Register successful",
       userId: newUser._id,
       tokens: { accessToken, refreshToken },
     });
-    console.log("register sucesfull");
+    console.log("register successful");
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -79,11 +80,13 @@ export const getUser = async (req, res) => {
   const { userId } = req.params;
   try {
     const userData = await User.findById(userId).select(
-      "imgUrl name college _id",
+      "imgUrl name college _id role",
     );
     if (userData) {
       const accessToken = await createAccessToken(userData._id);
       const refreshToken = await createRefreshToken(userData._id);
+      console.log(userData);
+
       res
         .status(200)
         .json({ user: userData, tokens: { accessToken, refreshToken } });
@@ -92,5 +95,33 @@ export const getUser = async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+// guest user login
+export const guestLogin = async (req, res) => {
+  try {
+    await User.updateMany({}, { $unset: { number: 1 } });
+    const guestUser = await User.create({
+      name: "Guest user",
+      imgUrl: "https://i.ibb.co/4RJhQBn/boy1.jpg",
+      role: "guest",
+      college: {
+        collegeName: "FOMO College",
+        department: "FOMO Department",
+        year: "FOMO Year",
+      },
+      uid: `guest_${Date.now()}`,
+    });
+    const accessToken = await createAccessToken(guestUser._id);
+    const refreshToken = await createRefreshToken(guestUser._id);
+    res.status(200).json({
+      message: "Guest login successful",
+      userId: guestUser._id,
+      role: guestUser.role,
+      tokens: { accessToken, refreshToken },
+    });
+  } catch (error) {
+    console.error("Guest login error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
