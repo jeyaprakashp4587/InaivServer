@@ -5,7 +5,7 @@ import DB1 from "../DB/DB1.js";
 
 export const registerUser = async (req, res) => {
   try {
-    const { uid, imgUrl } = req.user;
+    const { uid, imgUrl, number } = req.user;
     const { name, collegeName, department, year } = req.body;
     const newUser = await User.create({
       uid,
@@ -16,6 +16,7 @@ export const registerUser = async (req, res) => {
         year: year,
       },
       imgUrl: imgUrl,
+      number: number,
     });
     const accessToken = await createAccessToken(newUser._id);
     const refreshToken = await createRefreshToken(newUser._id);
@@ -33,18 +34,13 @@ export const registerUser = async (req, res) => {
 // login
 export const login = async (req, res) => {
   const { uid } = req.user;
-  console.log(uid);
-
   try {
     const userData = await User.findOne({ uid: uid });
-
     if (!userData) {
       return res.status(404).json({ error: "User not found" });
     }
     const accessToken = await createAccessToken(userData._id);
     const refreshToken = await createRefreshToken(userData._id);
-    console.log(userData);
-
     res.status(200).json({
       message: "login successful",
       userId: userData._id,
@@ -55,20 +51,17 @@ export const login = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 // refresh token
 export const refresh = async (req, res) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken)
       return res.status(401).json({ msg: "No token provided" });
-
     // Verify the refresh token
     const decoded = jwt.verify(
       refreshToken,
       process.env.JWT_REFRESH_TOKEN_SECRET,
     );
-
     // Create a new access token (await the async function)
     const newAccessToken = await createAccessToken(decoded.userId);
     res.json({ accessToken: newAccessToken });

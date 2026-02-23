@@ -17,6 +17,7 @@ export const verifyFirebaseToken = async (req, res, next) => {
       provider: decoded.firebase?.sign_in_provider,
       imgUrl: decoded.picture,
       email: decoded.email,
+      number: decoded.phone_number,
     };
     next();
   } catch (err) {
