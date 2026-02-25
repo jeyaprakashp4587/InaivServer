@@ -1,12 +1,10 @@
 import express from "express";
 import authRoutes from "./Routes/authroutes.js";
-import groupsRoutes from "./Routes/groupsRoutes.js";
-import userRoutes from "./Routes/userRoutes.js";
-import privateChatsRoutes from "./Routes/privateChatsRoutes.js";
-import sellNotesRoutes from "./Routes/sellNotesRoutes.js";
-import groupChatRoutes from "./Routes/groupChatRoutes.js";
-import freelanceRoutes from "./Routes/freelanceRoutes.js";
-import preps from "./Routes/prepRoutes.js";
+import billingRoutes from "./Routes/billingRoutes.js";
+import paymentRoutes from "./Routes/paymentRoutes.js";
+import analysisRoutes from "./Routes/analysisRoutes.js";
+import { verifyToken } from "./Middlewares/JWT.js";
+
 import bodyParser from "body-parser";
 import cors from "cors";
 const app = express();
@@ -24,12 +22,8 @@ app.get("/get", (req, res) => {
 
 // routes
 app.use("/auth", authRoutes);
-app.use("/groups", groupsRoutes);
-app.use("/user", userRoutes);
-app.use("/privateChats", privateChatsRoutes);
-app.use("/sellNotes", sellNotesRoutes);
-app.use("/groupChat", groupChatRoutes);
-app.use("/freelance", freelanceRoutes);
-app.use("/preparation", preps);
+app.use("/billing", verifyToken, billingRoutes);
+app.use("/payments", verifyToken, paymentRoutes);
+app.use("/analysis", verifyToken, analysisRoutes);
 
 export default app;

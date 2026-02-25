@@ -1,127 +1,248 @@
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 import User from "../Models/User.js";
 import { createAccessToken, createRefreshToken } from "../Middlewares/JWT.js";
-import DB1 from "../DB/DB1.js";
+import { ensureUserBillingSetup, getBillingOverview } from "../Services/billingService.js";
+
+dotenv.config();
+
+const REFRESH_SECRET = process.env.JWT_REFRESH_TOKEN_SECRET;
+const JWT_ISSUER = process.env.JWT_ISSUER || "rf-backend";
+const JWT_AUDIENCE = process.env.JWT_AUDIENCE || "rf-frontend";
+
+const buildAuthPayload = async (userId) => {
+  const accessToken = await createAccessToken(userId);
+  const refreshToken = await createRefreshToken(userId);
+  return { accessToken, refreshToken };
+};
+
+const safeBillingBootstrap = async (userId, stageLabel) => {
+  try {
+    await ensureUserBillingSetup(userId);
+  } catch (billingErr) {
+    console.warn(`Billing bootstrap failed during ${stageLabel}:`, billingErr.message);
+  }
+};
 
 export const registerUser = async (req, res) => {
   try {
-    const { uid, imgUrl } = req.user;
-    const { name, collegeName, department, year } = req.body;
+    const { uid, imgUrl, email, name: firebaseName } = req.user || {};
+    const { name, companyName = "" } = req.body || {};
+
+    if (!uid || !email) {
+      return res.status(401).json({ error: "Invalid Firebase auth payload" });
+    }
+
+    const normalizedName = String(name || firebaseName || "").trim();
+
+    if (!normalizedName) {
+      return res.status(400).json({ error: "name is required" });
+    }
+
+    const existingUser = await User.findOne({ uid }).lean();
+    if (existingUser) {
+      return res.status(409).json({
+        error: "User already exists. Please login.",
+        code: "USER_ALREADY_EXISTS",
+      });
+    }
+
     const newUser = await User.create({
       uid,
-      name,
-      college: {
-        collegeName: collegeName,
-        department: department,
-        year: year,
-      },
-      imgUrl: imgUrl,
-
+      email,
+      name: normalizedName,
+      companyName: String(companyName || "").trim(),
+      imgUrl: imgUrl || "",
       role: "user",
+      provider: "google",
     });
-    const accessToken = await createAccessToken(newUser._id);
-    const refreshToken = await createRefreshToken(newUser._id);
-    res.status(201).json({
+
+    await safeBillingBootstrap(newUser._id, "register");
+
+    const tokens = await buildAuthPayload(newUser._id);
+    const overview = await getBillingOverview(newUser._id);
+
+    return res.status(201).json({
       message: "Register successful",
       userId: newUser._id,
-      tokens: { accessToken, refreshToken },
+      user: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        companyName: newUser.companyName,
+        imgUrl: newUser.imgUrl,
+        role: newUser.role,
+      },
+      billing: overview,
+      tokens,
     });
-    console.log("register successful");
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
+    console.error("Register error:", err);
+    return res.status(500).json({ error: "Server error" });
   }
 };
-// login
+
 export const login = async (req, res) => {
-  const { uid } = req.user;
+  const { uid } = req.user || {};
+
   try {
-    const userData = await User.findOne({ uid: uid });
-    if (!userData) {
-      return res.status(404).json({ error: "User not found" });
+    if (!uid) {
+      return res.status(401).json({ error: "Invalid Firebase auth payload" });
     }
-    const accessToken = await createAccessToken(userData._id);
-    const refreshToken = await createRefreshToken(userData._id);
-    res.status(200).json({
-      message: "login successful",
+
+    const userData = await User.findOne({ uid });
+
+    if (!userData) {
+      return res.status(404).json({
+        error: "User not found",
+        code: "USER_NOT_FOUND",
+        needsSignup: true,
+      });
+    }
+
+    await safeBillingBootstrap(userData._id, "login");
+
+    const tokens = await buildAuthPayload(userData._id);
+    const overview = await getBillingOverview(userData._id);
+
+    return res.status(200).json({
+      message: "Login successful",
       userId: userData._id,
-      tokens: { accessToken, refreshToken },
+      user: {
+        _id: userData._id,
+        name: userData.name,
+        email: userData.email,
+        companyName: userData.companyName,
+        imgUrl: userData.imgUrl,
+        role: userData.role,
+      },
+      billing: overview,
+      tokens,
     });
   } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Login error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
-// refresh token
+
 export const refresh = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
-    if (!refreshToken)
+    const { refreshToken } = req.body || {};
+
+    if (!refreshToken) {
       return res.status(401).json({ msg: "No token provided" });
-    // Verify the refresh token
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_TOKEN_SECRET,
-    );
-    // Create a new access token (await the async function)
-    const newAccessToken = await createAccessToken(decoded.userId);
-    res.json({ accessToken: newAccessToken });
+    }
+
+    if (!REFRESH_SECRET) {
+      return res.status(500).json({ error: "Refresh token secret is not configured" });
+    }
+
+    const decoded = jwt.verify(refreshToken, REFRESH_SECRET, {
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
+
+    if (decoded?.tokenType !== "refresh" || !decoded?.sub) {
+      return res.status(403).json({ msg: "Invalid refresh token type" });
+    }
+
+    const newAccessToken = await createAccessToken(decoded.sub);
+
+    return res.status(200).json({ accessToken: newAccessToken });
   } catch (err) {
     if (err.name === "JsonWebTokenError" || err.name === "TokenExpiredError") {
       return res.status(403).json({ msg: "Invalid or expired refresh token" });
     }
+
     console.error("Refresh token error:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-// get User
 export const getUser = async (req, res) => {
   const { userId } = req.params;
-  try {
-    const userData = await User.findById(userId).select(
-      "imgUrl name college _id role",
-    );
-    if (userData) {
-      const accessToken = await createAccessToken(userData._id);
-      const refreshToken = await createRefreshToken(userData._id);
-      console.log(userData);
 
-      res
-        .status(200)
-        .json({ user: userData, tokens: { accessToken, refreshToken } });
-    } else {
-      res.status(404).json({ message: "user not found" });
+  try {
+    if (!userId) {
+      return res.status(400).json({ error: "userId is required" });
     }
+
+    const isOwner = String(req.userId) === String(userId);
+    const isAdmin = req.user?.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    const userData = await User.findById(userId).select(
+      "_id name email companyName imgUrl role uid",
+    );
+
+    if (!userData) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    await safeBillingBootstrap(userData._id, "getUser");
+    const overview = await getBillingOverview(userData._id);
+
+    return res.status(200).json({ user: userData, billing: overview });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
-// guest user login
-export const guestLogin = async (req, res) => {
+
+export const getMe = async (req, res) => {
   try {
-    await User.updateMany({}, { $unset: { number: 1 } });
+    const userData = await User.findById(req.userId).select(
+      "_id name email companyName imgUrl role uid",
+    );
+
+    if (!userData) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    await safeBillingBootstrap(userData._id, "getMe");
+    const overview = await getBillingOverview(userData._id);
+
+    return res.status(200).json({ user: userData, billing: overview });
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const guestLogin = async (_req, res) => {
+  try {
     const guestUser = await User.create({
       name: "Guest user",
+      email: `guest_${Date.now()}@guest.local`,
+      companyName: "Guest Company",
       imgUrl: "https://i.ibb.co/4RJhQBn/boy1.jpg",
       role: "guest",
-      college: {
-        collegeName: "FOMO College",
-        department: "FOMO Department",
-        year: "FOMO Year",
-      },
       uid: `guest_${Date.now()}`,
+      provider: "guest",
     });
-    const accessToken = await createAccessToken(guestUser._id);
-    const refreshToken = await createRefreshToken(guestUser._id);
-    res.status(200).json({
+
+    await safeBillingBootstrap(guestUser._id, "guestLogin");
+
+    const tokens = await buildAuthPayload(guestUser._id);
+    const overview = await getBillingOverview(guestUser._id);
+
+    return res.status(200).json({
       message: "Guest login successful",
       userId: guestUser._id,
-      role: guestUser.role,
-      tokens: { accessToken, refreshToken },
+      user: {
+        _id: guestUser._id,
+        name: guestUser.name,
+        email: guestUser.email,
+        companyName: guestUser.companyName,
+        imgUrl: guestUser.imgUrl,
+        role: guestUser.role,
+      },
+      billing: overview,
+      tokens,
     });
   } catch (error) {
     console.error("Guest login error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };

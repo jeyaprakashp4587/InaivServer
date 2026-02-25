@@ -103,6 +103,7 @@ const seed = async () => {
       users.push({
         name: random(NAMES),
         uid: `UID_${i + 1}`,
+        email: `uid_${i + 1}@example.local`,
         imgUrl: random(PROFILE_IMAGES),
         college: {
           collegeName: group.name,

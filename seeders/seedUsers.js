@@ -40,6 +40,7 @@ const generateUsers = (count = 100) => {
     users.push({
       name: getRandom(names),
       uid: `TVL_UID_${i + 1}`,
+      email: `tvl_uid_${i + 1}@example.local`,
       FCMtoken: "",
       college: {
         collegeName: getRandom(colleges),

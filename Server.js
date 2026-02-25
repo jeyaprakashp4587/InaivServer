@@ -4,6 +4,7 @@ import DB1 from "./DB/DB1.js";
 import dotenv from "dotenv";
 dotenv.config();
 import app from "./app.js";
+import { ensureDefaultPlans } from "./Services/billingService.js";
 
 const server = http.createServer(app);
 //init firebase admin sdk
@@ -17,6 +18,12 @@ const admin = initializeFirebaseAdmin();
       "Redis connection failed - server will run without cache:",
       err.message,
     );
+  }
+
+  try {
+    await ensureDefaultPlans();
+  } catch (err) {
+    console.warn("Plan initialization failed:", err.message);
   }
 })();
 
